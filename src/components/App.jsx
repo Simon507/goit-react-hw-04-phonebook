@@ -1,7 +1,7 @@
 import { GlobalStyle } from './GlobalStyle';
 import { Layout } from './Layout';
 
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { ContactForm } from './form/ContactForm';
 import { Filter } from './filter/Filter';
 import { ContactList } from 'components/contactList/ContactList';
@@ -13,73 +13,57 @@ const startState = [
   { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
 ];
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
-
-  componentDidMount() {
+export const App = () => {
+  const [contacts, setContacts] = useState(() => {
     const getContacts = localStorage.getItem('contacts');
-    console.log(getContacts);
     if (getContacts !== null) {
       const parsedContacts = JSON.parse(getContacts);
-      this.setState({ contacts: parsedContacts });
-      return;
-    }
-    this.setState({ contacts: startState });
-  }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+      return parsedContacts;
     }
-  }
+    return startState;
+  });
 
-  addContact = newContacts => {
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const addContact = newContacts => {
     if (
-      this.state.contacts.some(
+      contacts.some(
         item => item.name.toLowerCase() === newContacts.name.toLowerCase()
       )
     ) {
       return alert(`${newContacts.name} is already exist in contacts`);
     }
 
-    this.setState(pervState => {
-      return {
-        contacts: [...pervState.contacts, newContacts],
-      };
-    });
+    setContacts([...contacts, newContacts]);
   };
 
-  findItem = findName => {
-    this.setState({ filter: findName });
+  const findItem = findName => {
+    setFilter(findName);
   };
 
-  deleteItem = id => {
-    this.setState(pervState => {
-      return {
-        contacts: pervState.contacts.filter(item => item.id !== id),
-      };
-    });
+  const deleteItem = id => {
+    setContacts(contacts.filter(item => item.id !== id));
   };
 
-  render() {
-    return (
-      <Layout>
-        <GlobalStyle />
+  return (
+    <Layout>
+      <GlobalStyle />
 
-        <h1>Phonebook</h1>
-        <ContactForm addContact={this.addContact}></ContactForm>
-        <h2>Contacts</h2>
-        <Filter onFind={this.findItem}> </Filter>
+      <h1>Phonebook</h1>
+      <ContactForm addContact={addContact}></ContactForm>
+      <h2>Contacts</h2>
+      <Filter onFind={findItem}> </Filter>
 
-        <ContactList
-          onDelete={this.deleteItem}
-          contacts={this.state.contacts}
-          nameFind={this.state.filter}
-        ></ContactList>
-      </Layout>
-    );
-  }
-}
+      <ContactList
+        onDelete={deleteItem}
+        contacts={contacts}
+        nameFind={filter}
+      ></ContactList>
+    </Layout>
+  );
+};
